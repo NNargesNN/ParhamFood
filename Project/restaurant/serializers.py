@@ -1,46 +1,90 @@
-from django.contrib.auth.models import User
-from django.core.validators import MinValueValidator, MaxValueValidator
-from django.db import models
-from rest_framework import serializers
-from .models import Restaurant, Food, Review
+from  rest_framework import  serializers
+from  .models import Restaurant,Food,Order,Comment
+from django.contrib.auth.models import  User
 
 
-class RestaurantSerializer(serializers.ModelSerializer):
-    Name = serializers.CharField(max_length=120)
-    Region = serializers.OneToOneField(Region, on_delete=models.CASCADE)
-    Manager = serializers.OneToOneField(ManagerUser, on_delete=models.CASCADE)
-    Address = serializers.TextField(blank=True, null=True)
-    DeliveryCost = serializers.IntegerField(null=False)
-    DeliveryTime = serializers.IntegerField(null=False)
-    ServiceRegions = serializers.ManyToManyField(Region)
 
+class UserSerializers(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ("username","password")
+
+    def create(self, validated_data):
+        user = User.objects.create_user(
+            username=validated_data['username'],
+            password=validated_data['password'],
+        )
+        user.save()
+        return user
+
+
+class RestaurantSerializers(serializers.ModelSerializer):
+    manager = serializers.CharField(source="manager.username",read_only=True)
     class Meta:
         model = Restaurant
         fields = '__all__'
 
-    def createRestaurant(self, data):
-        currentUser = self.M
-
     def menu(self, obj):
-        allFoods = Food.objects.filter(Restaurant=obj)
+        return Food.objects.filter(Restaurant=obj)
 
 
-class FoodSerializer(serializers.Serializer):
-    Name = serializers.CharField(max_length=100)
-    Status = serializers.BooleanField(default=True)
-    Price = serializers.IntegerField(null=False)
-    Restaurant = serializers.ForeignKey(Restaurant, on_delete=models.CASCADE)
 
+class FoodSerializer(serializers.ModelSerializer):
+    Restaurant = serializers.CharField(source="Restaurant.name",read_only=True)
     class Meta:
         model = Food
+        fields = '__all__'
 
 
-class Review(serializers.Serializer):
-    User = serializers.ForeignKey(CustomerUser, on_delete=models.CASCADE)
-    Order = serializers.ForeignKey(Order, on_delete=models.CASCADE)
-    Text = serializers.CharField(max_length=140)
-    Vote = serializers.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(5)])
-    ManagerResponse = serializers.CharField(max_length=140)
 
+class FoodSearchSerializer(serializers.ModelSerializer):
+    Restaurant = serializers.CharField(source="Restaurant.name",read_only=True)
+    Restaurant_district = serializers.CharField(source="Restaurant.district",read_only=True)
+    Restaurant_status = serializers.CharField(source="Restaurant.status",read_only=True)
+    Restaurant_price = serializers.CharField(source="Restaurant.price",read_only=True)
+    Restaurant_name = serializers.CharField(source="Restaurant.name",read_only=True)
+    Restaurant_from = serializers.CharField(source="Restaurant.fromTime",read_only=True)
+    Restaurant_to = serializers.CharField(source="Restaurant.toTime",read_only=True)
+    Restaurant_id = serializers.CharField(source="Restaurant.id",read_only=True)
     class Meta:
-        model = Review
+        model = Food
+        fields = '__all__'
+
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    User = serializers.CharField(source="User.username",read_only=True)
+    class Meta:
+        model = Comment
+        fields = '__all__'
+
+class ReplySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Comment
+        fields = ('RestaurantComment',)
+
+class OrderSerializer(serializers.ModelSerializer):
+    User = serializers.CharField(source="User.username",read_only=True)
+    Restaurant = serializers.CharField(source="Restaurant.name",read_only=True)
+    class Meta:
+        model = Order
+        fields = '__all__'
+
+
+class UpdateOrderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Order
+        fields = ('state',)
+
+
+
+class RestaurantUpdateSerializers(serializers.ModelSerializer):
+    class Meta:
+        model = Restaurant
+        fields = ('name','district','address','fromTime','toTime','price','status','id')
+
+    def menu(self, obj):
+        return Food.objects.filter(Restaurant=obj)
+
+
+
