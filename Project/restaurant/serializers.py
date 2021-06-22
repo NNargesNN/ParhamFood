@@ -1,29 +1,46 @@
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
+from rest_framework import serializers
+from .models import Restaurant, Food, Review
 
 
-class Restaurant(models.Model):
-    Name = models.CharField(max_length=120)
-    Region = models.OneToOneField(Region, on_delete=models.CASCADE)
-    Manager = models.OneToOneField(ManagerUser, on_delete=models.CASCADE)
-    Address = models.TextField(blank=True, null=True)
-    DeliveryCost = models.IntegerField(null=False)
-    DeliveryTime = models.IntegerField(null=False)
-    ServiceRegions = models.ManyToManyField(Region)
+class RestaurantSerializer(serializers.ModelSerializer):
+    Name = serializers.CharField(max_length=120)
+    Region = serializers.OneToOneField(Region, on_delete=models.CASCADE)
+    Manager = serializers.OneToOneField(ManagerUser, on_delete=models.CASCADE)
+    Address = serializers.TextField(blank=True, null=True)
+    DeliveryCost = serializers.IntegerField(null=False)
+    DeliveryTime = serializers.IntegerField(null=False)
+    ServiceRegions = serializers.ManyToManyField(Region)
+
+    class Meta:
+        model = Restaurant
+        fields = '__all__'
+
+    def createRestaurant(self, data):
+        currentUser = self.M
+
+    def menu(self, obj):
+        allFoods = Food.objects.filter(Restaurant=obj)
 
 
-class Food(models.Model):
-    Name = models.CharField(max_length=100)
-    Status = models.BooleanField(default=True)
-    Price = models.IntegerField(null=False)
-    Restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE)
+class FoodSerializer(serializers.Serializer):
+    Name = serializers.CharField(max_length=100)
+    Status = serializers.BooleanField(default=True)
+    Price = serializers.IntegerField(null=False)
+    Restaurant = serializers.ForeignKey(Restaurant, on_delete=models.CASCADE)
+
+    class Meta:
+        model = Food
 
 
-class Review(models.Model):
-    User = models.ForeignKey(CustomerUser, on_delete=models.CASCADE)
-    Order = models.ForeignKey(Order, on_delete=models.CASCADE)
-    Text = models.CharField(max_length=140)
-    Vote = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(5)])
-    ManagerResponse = models.CharField(max_length=140)
+class Review(serializers.Serializer):
+    User = serializers.ForeignKey(CustomerUser, on_delete=models.CASCADE)
+    Order = serializers.ForeignKey(Order, on_delete=models.CASCADE)
+    Text = serializers.CharField(max_length=140)
+    Vote = serializers.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(5)])
+    ManagerResponse = serializers.CharField(max_length=140)
 
+    class Meta:
+        model = Review
